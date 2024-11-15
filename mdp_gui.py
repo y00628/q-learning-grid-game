@@ -18,6 +18,9 @@ class GridGame:
         self.total_reward = 0
         self.current_reward = 0
         self.game_over = False
+        self.max_reward_prob = max_reward_prob
+        self.fixed_path = fixed_path
+        self.path_death_prob = path_death_prob
 
         # Version and color map selection
         self.version = tk.IntVar(value=1)
@@ -33,10 +36,8 @@ class GridGame:
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
 
-        # Q-learning parameters
-        #self.q_table = np.zeros((self.grid_size, self.grid_size, 4))  # Q-table
-        self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
-        self.max_goal_to_reach = 10
+        # Q-learning variables
+        self.reached_goal = False
         self.actions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
 
         # Player position initialization
@@ -90,18 +91,19 @@ class GridGame:
         self.root.bind("<space>", lambda _: self.reset_game())
         self.root.bind("<q>", lambda _: self.train_q_learning())
         self.root.bind("<t>", lambda _: self.test_q_learning())
+        self.root.bind("<r>", lambda _: self.change_map())
 
     def train_q_learning(self):
         """Trains the agent using Q-learning."""
         rewards_per_episode = []
         self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
-        self.learning_rate = 0.1
+        self.learning_rate = 0.05
         self.discount_factor = 0.95
         self.exploration_prob = 1.0
         self.exploration_decay = 0.99
-        self.min_exploration_prob = 0.05
-        self.num_episodes = 10_000
-        num_goal_reached = 0
+        self.min_exploration_prob = 0.1
+        self.num_episodes = 5000
+        self.reached_goal = False
         for episode in range(self.num_episodes):
             self.reset_player_position()
             visited_count = np.zeros((self.grid_size, self.grid_size), dtype=int)
@@ -137,6 +139,7 @@ class GridGame:
                     total_reward -= 20
 
                 # Penalize for visted state (to prevent just going back and forth)
+                # TODO need to confirm whether it is okay to add this part
                 visited_count[new_state[1], new_state[0]] += 1
                 if visited_count[new_state[1], new_state[0]] > 1:
                     reward -= (1 * visited_count[new_state[1], new_state[0]])
@@ -156,11 +159,13 @@ class GridGame:
 
                 # Check if reached goal
                 if state == self.goal_position:
-                    num_goal_reached += 1
-                    total_reward += 10
+                    print('Goal reached during training')
+                    self.test_q_learning()
                     break
 
-            if num_goal_reached >= self.max_goal_to_reach:
+            # if num_goal_reached >= self.max_goal_to_reach:
+            #     break
+            if self.reached_goal:
                 break
 
             progress = int((episode + 1) / self.num_episodes * 100)
@@ -185,6 +190,7 @@ class GridGame:
         plt.xlabel("Episode")
         plt.ylabel("Total Reward")
         plt.title("Q-Learning Training Progress")
+        plt.savefig("q-learning training progress.png", dpi=300)
         plt.show()
 
     def test_q_learning(self):
@@ -365,6 +371,7 @@ class GridGame:
     def end_game(self, reached_goal):
         """Ends the game and displays a message in the control panel."""
         self.game_over = True
+        self.reached_goal = reached_goal
         if reached_goal:
             message = "Congratulations! You reached the goal!"
             self.end_message_label.config(text=f"{message}", fg="green")
@@ -388,6 +395,14 @@ class GridGame:
         """Handles version change and redraws the grid and player position."""
         self.reset_game()  # Reset game for the new version
         self.draw_player()  # Ensure the player position is shown after version change
+
+    def change_map(self):
+        self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * self.max_reward_prob  # Low reward probability
+        self.D = self.create_death_matrix(fixed=self.fixed_path, path_death_prob=self.path_death_prob)  # Custom death matrix with a complex path
+        self.reached_goal = False
+        self.reset_game()
+        self.root.update()
+
 
 # Main execution
 if __name__ == "__main__":
