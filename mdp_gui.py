@@ -22,24 +22,15 @@ class GridGame:
         self.max_reward_prob = max_reward_prob
         self.fixed_path = fixed_path
         self.path_death_prob = path_death_prob
+        self.actions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
 
         # Version and color map selection
         self.version = tk.IntVar(value=1)
         self.show_reward_map = tk.BooleanVar(value=True)
 
-        # Progress bar
-        control_frame = tk.Frame(self.root)
-        control_frame.pack(pady=5)
-        self.progress_bar = ttk.Progressbar(control_frame, orient="horizontal", length=300, mode="determinate")
-        self.progress_bar.grid(row=10, column=0, pady=5, columnspan=3)
-
         # Reward and death matrices
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
-
-        # Q-learning variables
-        self.reached_goal = False
-        self.actions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
 
         # Player position initialization
         self.reset_player_position()
@@ -91,7 +82,7 @@ class GridGame:
         self.root.bind("<Right>", lambda _: self.move_player(1, 0))
         self.root.bind("<space>", lambda _: self.reset_game())
         self.root.bind("<q>", lambda _: train_q_learning(self))
-        self.root.bind("<t>", lambda _: test_q_learning(self))
+        self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
@@ -286,7 +277,7 @@ class GridGame:
         self.D = self.create_death_matrix(fixed=self.fixed_path, path_death_prob=self.path_death_prob)  # Custom death matrix with a complex path
         self.reached_goal = False
         self.reset_game()
-        self.root.update()
+        # self.root.update()
 
 
 # Main execution
