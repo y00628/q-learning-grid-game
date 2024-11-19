@@ -4,6 +4,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
+from q_learning import test_q_learning, train_q_learning
 
 
 class GridGame:
@@ -89,125 +90,9 @@ class GridGame:
         self.root.bind("<Left>", lambda _: self.move_player(-1, 0))
         self.root.bind("<Right>", lambda _: self.move_player(1, 0))
         self.root.bind("<space>", lambda _: self.reset_game())
-        self.root.bind("<q>", lambda _: self.train_q_learning())
-        self.root.bind("<t>", lambda _: self.test_q_learning())
+        self.root.bind("<q>", lambda _: train_q_learning(self))
+        self.root.bind("<t>", lambda _: test_q_learning(self))
         self.root.bind("<r>", lambda _: self.change_map())
-
-    def train_q_learning(self):
-        """Trains the agent using Q-learning."""
-        rewards_per_episode = []
-        self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
-        self.learning_rate = 0.05
-        self.discount_factor = 0.95
-        self.exploration_prob = 1.0
-        self.exploration_decay = 0.99
-        self.min_exploration_prob = 0.1
-        self.num_episodes = 5000
-        self.reached_goal = False
-        for episode in range(self.num_episodes):
-            self.reset_player_position()
-            visited_count = np.zeros((self.grid_size, self.grid_size), dtype=int)
-            state = self.player_position
-            max_steps = 100
-            step_count = 0
-            total_reward = 0
-            while not self.game_over and step_count < max_steps:
-                step_count += 1
-                # Choose action (epsilon-greedy)
-                if random.uniform(0, 1) < self.exploration_prob:
-                    action_index = random.randint(0, 3)
-                else:
-                    max_q_value = np.max(self.q_table[state[1], state[0], :])
-                    # Choose randomly among the best actions in case there is a tie
-                    best_actions = np.where(self.q_table[state[1], state[0], :] == max_q_value)[0]
-                    action_index = np.random.choice(best_actions)
-                action = self.actions[action_index]
-
-                # Take action
-                new_state = (max(0, min(state[0] + action[0], self.grid_size - 1)),
-                             max(0, min(state[1] + action[1], self.grid_size - 1)))
-                
-                # Get reward and check for death
-                reward = np.random.binomial(1, self.R[new_state[1], new_state[0]])
-                death = np.random.binomial(1, self.D[new_state[1], new_state[0]])
-
-                if death:
-                    reward = -1
-                    self.game_over = True
-                if step_count >= max_steps:
-                    self.game_over = True
-                    total_reward -= 20
-
-                # Penalize for visted state (to prevent just going back and forth)
-                # TODO need to confirm whether it is okay to add this part
-                visited_count[new_state[1], new_state[0]] += 1
-                if visited_count[new_state[1], new_state[0]] > 1:
-                    reward -= (1 * visited_count[new_state[1], new_state[0]])
-
-                # Update Q-value
-                best_future_q = np.max(self.q_table[new_state[1], new_state[0], :])
-                self.q_table[state[1], state[0], action_index] += self.learning_rate * (
-                        reward + self.discount_factor * best_future_q - self.q_table[state[1], state[0], action_index])
-
-                # Update GUI to show agent movement
-                self.player_position = new_state
-                self.draw_player()
-                self.root.update()
-
-                state = new_state
-                total_reward += reward
-
-                # Check if reached goal
-                if state == self.goal_position:
-                    print('Goal reached during training')
-                    self.test_q_learning()
-                    break
-
-            # if num_goal_reached >= self.max_goal_to_reach:
-            #     break
-            if self.reached_goal:
-                break
-
-            progress = int((episode + 1) / self.num_episodes * 100)
-            self.progress_bar["value"] = progress
-            self.root.update()
-
-            if episode % 100 == 0:
-                print(f"Episode {episode}: Total Reward = {total_reward}")
-                print(self.exploration_prob)
-
-            # Decay exploration prob
-            self.exploration_prob = max(self.min_exploration_prob, self.exploration_prob * self.exploration_decay)
-            rewards_per_episode.append(total_reward)
-
-            self.game_over = False
-
-        self.progress_bar["value"] = 100
-        self.root.update()
-
-        # Plot rewards
-        plt.plot(rewards_per_episode)
-        plt.xlabel("Episode")
-        plt.ylabel("Total Reward")
-        plt.title("Q-Learning Training Progress")
-        plt.savefig("q-learning training progress.png", dpi=300)
-        plt.show()
-
-    def test_q_learning(self):
-        """Tests the trained Q-learning agent."""
-        self.reset_game()
-        state = self.player_position
-        self.total_reward = 0
-        while not self.game_over:
-            action_index = np.argmax(self.q_table[state[1], state[0], :])
-            action = self.actions[action_index]
-            new_state = (max(0, min(state[0] + action[0], self.grid_size - 1)),
-                         max(0, min(state[1] + action[1], self.grid_size - 1)))
-            state = new_state
-            self.player_position = state
-            self.draw_player()
-            self.root.update()
-            self.check_position()
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
