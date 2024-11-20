@@ -4,7 +4,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
-from q_learning import test_q_learning, train_q_learning
+from q_learning import test_q_learning, train_q_learning, train_q_learning_policy, test_policy
 
 
 class GridGame:
@@ -72,6 +72,10 @@ class GridGame:
         self.restart_button = tk.Button(control_frame, text="Restart Game (space key)", command=self.reset_game)
         self.restart_button.grid(row=9, column=0, pady=5)
 
+        #I intialize it here just for ease of use
+        self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
+
+
         self.setup_grid()
         self.draw_player()
 
@@ -84,6 +88,9 @@ class GridGame:
         self.root.bind("<q>", lambda _: train_q_learning(self))
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
+
+        self.root.bind("<p>", lambda _: train_q_learning_policy(self))  # Train policy using policy iteration
+        self.root.bind("<y>", lambda _: test_policy(self, self.policy))
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
