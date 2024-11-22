@@ -121,3 +121,5 @@ def test_q_learning(grid_game, is_training=True):
             grid_game.root.update()
         grid_game.check_position()
 
+
+

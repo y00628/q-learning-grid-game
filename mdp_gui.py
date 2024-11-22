@@ -5,7 +5,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
-from value_learning import train_value_iteration, test_value_iteration_policy
+from policy_learning import train_policy_iteration, test_policy_iteration
 
 
 class GridGame:
@@ -32,10 +32,10 @@ class GridGame:
         # Reward and death matrices
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
-        self.P = np.zeros((self.grid_size * self.grid_size, self.grid_size * self.grid_size, len(self.actions))) #transition matrix
-        print(self.D)
-        self.V = np.zeros((self.grid_size, self.grid_size))#v values used in value learning
+        self.P =   np.zeros((self.grid_size ** 2, len(self.actions), self.grid_size ** 2))#transition matrix
         # Player position initialization
+        print(self.D)
+        print(self.R)
         self.reset_player_position()
 
         # Game UI setup
@@ -77,7 +77,7 @@ class GridGame:
 
         #I intialize it here just for ease of use
         self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
-        self.policy = np.zeros((self.grid_size, self.grid_size), dtype=int)
+        self.policy = np.random.randint(0, len(self.actions), (self.grid_size, self.grid_size), dtype=int)
 
 
         self.setup_grid()
@@ -93,8 +93,8 @@ class GridGame:
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
 
-        self.root.bind("<p>", lambda _: train_value_iteration(self))  # Train policy using policy iteration
-        self.root.bind("<y>", lambda _: test_value_iteration_policy(self))
+        self.root.bind("<p>", lambda _: train_policy_iteration(self))  # Train policy using policy iteration
+        self.root.bind("<y>", lambda _: test_policy_iteration(self))
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
@@ -290,39 +290,46 @@ class GridGame:
         self.reset_game()
         # self.root.update()
 
-    def create_transition(self):
-        """Creates the transition probability matrix for the grid."""
+    def get_state_from_pos(self, cords):
+        """
+        Converts a 2D grid position (row, col) into a 1D state index.
+        """
+        row, col = cords
+        return row * self.grid_size + col
 
-        grid_size = self.grid_size
-        num_states = grid_size * grid_size
-        num_actions = len(self.actions)
+    # def create_transition(self):
+    #     """Creates the transition probability matrix for the grid."""
 
-        # Initialize transition probabilities
-        self.P = np.zeros((num_states, num_states, num_actions))
+    #     grid_size = self.grid_size
+    #     num_states = grid_size * grid_size
+    #     num_actions = len(self.actions)
 
-        for x in range(grid_size):
-            for y in range(grid_size):
-                current_state = x * grid_size + y  # Flattened state index (x, y)
+    #     # Initialize transition probabilities
+    #     self.P = np.zeros((num_states, num_states, num_actions))
 
-                for action_index, action in enumerate(self.actions):
-                    # Compute new state based on action
-                    new_x = max(0, min(x + action[0], grid_size - 1))
-                    new_y = max(0, min(y + action[1], grid_size - 1))
-                    new_state = new_x * grid_size + new_y  # Flattened new state index
+    #     for x in range(grid_size):
+    #         for y in range(grid_size):
+    #             current_state = x * grid_size + y  # Flattened state index (x, y)
 
-                    # Handle death zones
-                    if self.D[new_x, new_y]:  # Death matrix probability
-                        self.P[new_state, current_state, action_index] = self.D[new_x, new_y]
-                        self.P[current_state, current_state, action_index] += (1 - self.D[new_x, new_y])
-                    else:
-                        self.P[new_state, current_state, action_index] = 1.0
+    #             for action_index, action in enumerate(self.actions):
+    #                 # Compute new state based on action
+    #                 new_x = max(0, min(x + action[0], grid_size - 1))
+    #                 new_y = max(0, min(y + action[1], grid_size - 1))
+    #                 new_state = new_x * grid_size + new_y  # Flattened new state index
 
-        # Normalize probabilities for each state-action pair
-        for s in range(num_states):
-            for a in range(num_actions):
-                total_prob = np.sum(self.P[:, s, a])
-                if total_prob > 0:
-                    self.P[:, s, a] /= total_prob
+    #                 # Handle death zones
+    #                 if self.D[new_x, new_y]:  # Death matrix probability
+    #                     self.P[new_state, current_state, action_index] = self.D[new_x, new_y]
+    #                     self.P[current_state, current_state, action_index] += (1 - self.D[new_x, new_y])
+    #                 else:
+    #                     self.P[new_state, current_state, action_index] = 1.0
+
+    #     # Normalize probabilities for each state-action pair
+    #     for s in range(num_states):
+    #         for a in range(num_actions):
+    #             total_prob = np.sum(self.P[:, s, a])
+    #             if total_prob > 0:
+    #                 self.P[:, s, a] /= total_prob
 
 
 
