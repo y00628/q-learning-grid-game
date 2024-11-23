@@ -5,7 +5,8 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
-from policy_learning import train_policy_iteration, test_policy_iteration
+from policy_learning import PolicyIteration
+
 
 
 class GridGame:
@@ -32,7 +33,7 @@ class GridGame:
         # Reward and death matrices
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
-        self.P =   np.zeros((self.grid_size ** 2, len(self.actions), self.grid_size ** 2))#transition matrix
+        self.policy_iteration = PolicyIteration(self)
         # Player position initialization
         print(self.D)
         print(self.R)
@@ -93,8 +94,8 @@ class GridGame:
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
 
-        self.root.bind("<p>", lambda _: train_policy_iteration(self))  # Train policy using policy iteration
-        self.root.bind("<y>", lambda _: test_policy_iteration(self))
+        self.root.bind("<p>", lambda _: self.policy_iteration.train())  # Bind 'p' to train policy iteration
+        self.root.bind("<y>", lambda _: self.policy_iteration.test_policy())  # Bind 'y' to test policy iteration
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
@@ -288,6 +289,7 @@ class GridGame:
         self.D = self.create_death_matrix(fixed=self.fixed_path, path_death_prob=self.path_death_prob)  # Custom death matrix with a complex path
         self.reached_goal = False
         self.reset_game()
+        self.policy_iteration = PolicyIteration(self)
         # self.root.update()
 
     def get_state_from_pos(self, cords):
@@ -307,39 +309,7 @@ class GridGame:
 
 
 
-    # def create_transition(self):
-    #     """Creates the transition probability matrix for the grid."""
 
-    #     grid_size = self.grid_size
-    #     num_states = grid_size * grid_size
-    #     num_actions = len(self.actions)
-
-    #     # Initialize transition probabilities
-    #     self.P = np.zeros((num_states, num_states, num_actions))
-
-    #     for x in range(grid_size):
-    #         for y in range(grid_size):
-    #             current_state = x * grid_size + y  # Flattened state index (x, y)
-
-    #             for action_index, action in enumerate(self.actions):
-    #                 # Compute new state based on action
-    #                 new_x = max(0, min(x + action[0], grid_size - 1))
-    #                 new_y = max(0, min(y + action[1], grid_size - 1))
-    #                 new_state = new_x * grid_size + new_y  # Flattened new state index
-
-    #                 # Handle death zones
-    #                 if self.D[new_x, new_y]:  # Death matrix probability
-    #                     self.P[new_state, current_state, action_index] = self.D[new_x, new_y]
-    #                     self.P[current_state, current_state, action_index] += (1 - self.D[new_x, new_y])
-    #                 else:
-    #                     self.P[new_state, current_state, action_index] = 1.0
-
-    #     # Normalize probabilities for each state-action pair
-    #     for s in range(num_states):
-    #         for a in range(num_actions):
-    #             total_prob = np.sum(self.P[:, s, a])
-    #             if total_prob > 0:
-    #                 self.P[:, s, a] /= total_prob
 
 
 
