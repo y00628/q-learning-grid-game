@@ -293,9 +293,19 @@ class GridGame:
     def get_state_from_pos(self, cords):
         """
         Converts a 2D grid position (row, col) into a 1D state index.
+        Accounts for flipped y-axis between the death matrix and the game grid.
         """
         row, col = cords
+        # No flipping of row indices needed for proper correspondence
         return row * self.grid_size + col
+    def if_death(self, x, y):
+        """Checks if the given position (x, y) is a death state."""
+        death_prob = self.D[y, x]  # Access the death probability for the given coordinates
+        death = np.random.binomial(1, death_prob)  # Simulate the death probability
+        return death == 1
+
+
+
 
     # def create_transition(self):
     #     """Creates the transition probability matrix for the grid."""
