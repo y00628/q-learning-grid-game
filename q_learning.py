@@ -92,7 +92,6 @@ def train_q_learning(grid_game): # this is uses value iteration alone the proces
         grid_game.game_over = False
 
     # Plot rewards
-    print(grid_game.P.shape)
     plt.plot(rewards_per_episode)
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
