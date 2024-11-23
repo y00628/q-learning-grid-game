@@ -5,6 +5,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
+from sarsa import *
 
 
 class GridGame:
