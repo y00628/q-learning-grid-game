@@ -199,7 +199,7 @@ class PolicyIteration:
         if plot:
             self.plot_training_history(eval_count_history, policy_change_history)
 
-    def plot_training_history(self, eval_count_history, policy_change_history, save_path="value_iteration_policy_updates_sweeps.png"):
+    def plot_training_history(self, eval_count_history, policy_change_history, save_path="policy_iteration_policy_updates_sweeps.png"):
         """Plots and saves training statistics for policy evaluation and improvement."""
         epochs = range(1, len(eval_count_history) + 1)
 

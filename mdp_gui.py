@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
 from policy_learning import PolicyIteration
+from value_learning import ValueIteration
 
 
 
@@ -34,9 +35,10 @@ class GridGame:
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
         self.policy_iteration = PolicyIteration(self)
+        self.value_iteration = ValueIteration(self, gamma=0.95)
+
         # Player position initialization
-        print(self.D)
-        print(self.R)
+
         self.reset_player_position()
 
         # Game UI setup
@@ -94,8 +96,11 @@ class GridGame:
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
 
-        self.root.bind("<p>", lambda _: self.policy_iteration.train())  # Bind 'p' to train policy iteration
-        self.root.bind("<y>", lambda _: self.policy_iteration.test_policy())  # Bind 'y' to test policy iteration
+        self.root.bind("<p>", lambda _: self.policy_iteration.train())  
+        self.root.bind("<y>", lambda _: self.policy_iteration.test_policy()) 
+        self.root.bind("<v>", lambda _: self.value_iteration.train())
+        self.root.bind("<b>", lambda _: self.value_iteration.test_policy())  # Bind 'y' to test value iteration
+
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
@@ -290,6 +295,8 @@ class GridGame:
         self.reached_goal = False
         self.reset_game()
         self.policy_iteration = PolicyIteration(self)
+        self.value_iteration = ValueIteration(self, gamma=0.95)#reset the iterations since it breaks without
+
         # self.root.update()
 
     def get_state_from_pos(self, cords):

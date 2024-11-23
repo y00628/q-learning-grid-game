@@ -1,132 +1,177 @@
 import numpy as np
-import random
+import time
 import matplotlib.pyplot as plt
+def get_reward_function(grid_game):
+    """Creates a reward table based on the death matrix and goal state."""
+    reward_table = np.full(grid_game.grid_size * grid_game.grid_size, -0.02)  # Default reward for normal states
 
-def train_value_iteration(grid_game):
-    """Trains the agent using Value Iteration."""
-    grid_game.create_transition()
+    for r in range(grid_game.grid_size):
+        for c in range(grid_game.grid_size):
+            state = grid_game.get_state_from_pos((r, c))
+            if (r, c) == grid_game.goal_position:
+                reward_table[state] = 10  # Goal state reward
+            elif grid_game.D[c, r] > 0.8:  # Death state probability
+                reward_table[state] = -1  # Death state penalty
 
-    grid_size = grid_game.grid_size
-    num_states = grid_size * grid_size
+    return reward_table
+
+def get_transition_model(grid_game, random_rate=0.2):
+    """Creates a transition probability model for the grid game."""
+    num_states = grid_game.grid_size * grid_game.grid_size
     num_actions = len(grid_game.actions)
-    grid_game.policy = np.zeros((grid_size, grid_size), dtype=int)
+    transition_model = np.zeros((num_states, num_actions, num_states))
 
-    discount_factor = 0.95
-    threshold = 0.001  # Convergence threshold
-    max_iterations = 1000  # Safety limit to prevent infinite loops
+    start_state = grid_game.get_state_from_pos(grid_game.start_position)
 
-    # Initialize value function for all states
-    rewards_per_iteration = []
+    for r in range(grid_game.grid_size):
+        for c in range(grid_game.grid_size):
+            state = grid_game.get_state_from_pos((r, c))
 
-    for iteration in range(max_iterations):
-        delta = 0  # Tracks the maximum change in V
-        
-        # Loop through all states
-        for y in range(grid_size):
-            for x in range(grid_size):
-                # State format: (x, y)
-                state = (x, y)
-                
-                # Skip terminal states
-                if state == grid_game.goal_position:
-                    continue
-                
-                # Compute the Bellman update for state (x, y)
-                v = grid_game.V[y, x]  # Current value of the state
-                action_values = []  # Stores values for each action
-                
+            if grid_game.D[c, r] > 0.8:  # Current state is a death state
+                # Redirect all actions to the starting state
                 for a in range(num_actions):
-                    value = 0
-                    for new_y in range(grid_size):
-                        for new_x in range(grid_size):
-                            prob = grid_game.P[new_y * grid_size + new_x, y * grid_size + x, a]
-                            reward = grid_game.R[new_y, new_x]
-                            
-                            # Check for death states
-                            if grid_game.D[new_y, new_x]:
-                                reward = -1  # Large negative reward for death
-                                grid_game.game_over = True
+                    transition_model[state, a, :] = 0
+                    transition_model[state, a, start_state] = 1
+                continue
 
-                            value += prob * (reward + discount_factor * grid_game.V[new_y, new_x])
-                    
-                    action_values.append(value)
-                
-                # Update the value for this state using the best action
-                grid_game.V[y, x] = max(action_values)
-                delta = max(delta, abs(v - grid_game.V[y, x]))
+            # For valid states, calculate normal transitions
+            neighbors = np.zeros(num_actions)
+            for a, (dr, dc) in enumerate(grid_game.actions):
+                new_r = max(0, min(r + dr, grid_game.grid_size - 1))
+                new_c = max(0, min(c + dc, grid_game.grid_size - 1))
+                neighbors[a] = grid_game.get_state_from_pos((new_r, new_c))
 
-        # Track the total reward (sum of V values) for visualization
-        total_reward = np.sum(grid_game.V)
-        rewards_per_iteration.append(total_reward)
-        
-        print(f"Iteration {iteration}: Delta = {delta}, Total Reward = {total_reward}")
-        
-        # Check for convergence
-        if delta < threshold:
-            print("Value iteration converged!")
-            break
-
-    # Plot rewards
-    plt.plot(rewards_per_iteration)
-    plt.xlabel("Iteration")
-    plt.ylabel("Total Reward")
-    plt.title("Value Iteration Training Progress")
-    plt.savefig("value_iteration_training_progress.png", dpi=300)
-    plt.show()
-
-    # Derive the optimal policy
-    for y in range(grid_size):
-        for x in range(grid_size):
-            # State format: (x, y)
-            state = (x, y)
-            action_values = []
-            
             for a in range(num_actions):
-                value = 0
-                for new_y in range(grid_size):
-                    for new_x in range(grid_size):
-                        prob = grid_game.P[new_y * grid_size + new_x, y * grid_size + x, a]
-                        reward = grid_game.R[new_y, new_x]
-                        value += prob * (reward + discount_factor * grid_game.V[new_y, new_x])
-                action_values.append(value)
-            
-            grid_game.policy[y, x] = np.argmax(action_values)
-    
-    print("Optimal policy derived!")
+                # Main transition to the intended state
+                transition_model[state, a, int(neighbors[a])] += (1 - random_rate)
 
+                # Random transitions to left and right neighbors
+                transition_model[state, a, int(neighbors[(a + 1) % num_actions])] += (random_rate / 2.0)
+                transition_model[state, a, int(neighbors[(a - 1) % num_actions])] += (random_rate / 2.0)
 
-def test_value_iteration_policy(grid_game):
-    """Tests the agent's policy in the grid game."""
-    grid_game.reset_player_position()
-    state = grid_game.player_position
-    print("Starting testing...")
-    print("Policy Matrix:\n", grid_game.policy)
-    grid_game.game_over = False
+            # Normalize probabilities
+            for a in range(num_actions):
+                total_prob = np.sum(transition_model[state, a, :])
+                if total_prob > 0:
+                    transition_model[state, a, :] /= total_prob
 
-    while not grid_game.game_over:
-        x, y = state
-        action_index = grid_game.policy[y, x]
-        action = grid_game.actions[action_index]
+    return transition_model
 
-        # Update the state
-        new_x = max(0, min(x + (-action[0]), grid_game.grid_size - 1))
-        new_y = max(0, min(y + (-action[1]), grid_game.grid_size - 1))
-        new_state = (new_x, new_y)
-        print(f"Action taken: {action}, State: {state} -> {new_state}")
+class ValueIteration:
+    def __init__(self, grid_game, gamma=0.95):
+        """
+        Initialize the ValueIteration class.
 
-        # Draw agent movement
-        grid_game.player_position = new_state
-        grid_game.draw_player()
-        grid_game.root.update()
+        Parameters:
+            grid_game: The GridGame object containing the game state, rewards, and transitions.
+            gamma: Discount factor for future rewards.
+        """
+        self.grid_game = grid_game
+        self.num_states = grid_game.grid_size * grid_game.grid_size
+        self.num_actions = len(grid_game.actions)
+        self.reward_function = get_reward_function(grid_game)  # Provided function
+        self.transition_model = get_transition_model(grid_game)  # Provided function
+        self.gamma = gamma
+        self.values = np.zeros(self.num_states)
+        self.policy = np.zeros(self.num_states, dtype=int)
 
-        # Check for game over conditions
-        death = np.random.binomial(1, grid_game.D[new_state[0], new_state[1]])
-        print(death)
-        if death:
-            print(f"Agent hit a death state at {new_state}!")
-            grid_game.game_over = True
-        elif new_state == grid_game.goal_position:
-            print(f"Goal reached at {new_state}!")
-            grid_game.game_over = True
+    def one_iteration(self):
+        """Perform one iteration of the value iteration algorithm."""
+        delta = 0
+        for s in range(self.num_states):
+            temp = self.values[s]
+            action_values = np.zeros(self.num_actions)
 
-        state = new_state
+            # Compute the value of each action
+            for a in range(self.num_actions):
+                p = self.transition_model[s, a]
+                action_values[a] = self.reward_function[s] + self.gamma * np.sum(p * self.values)
+
+            # Update the value for the state
+            self.values[s] = np.max(action_values)
+            delta = max(delta, abs(temp - self.values[s]))
+        return delta
+
+    def get_policy(self):
+        """Extract the optimal policy based on the current value function."""
+        policy = np.zeros(self.num_states, dtype=int)
+        for s in range(self.num_states):
+            action_values = np.zeros(self.num_actions)
+
+            # Compute the value of each action
+            for a in range(self.num_actions):
+                p = self.transition_model[s, a]
+                action_values[a] = self.reward_function[s] + self.gamma * np.sum(p * self.values)
+
+            # Choose the action with the maximum value
+            policy[s] = np.argmax(action_values)
+        return policy
+
+    def train(self, tol=1e-3):
+        """Train the value iteration algorithm until convergence."""
+        delta_history = []
+        while True:
+            delta = self.one_iteration()
+            delta_history.append(delta)
+            if delta < tol:
+                break
+        self.policy = self.get_policy()  # Compute the optimal policy after convergence
+
+        # Plot convergence history
+        fig, ax = plt.subplots(1, 1, figsize=(6, 4), dpi=150)
+        ax.plot(range(1, len(delta_history) + 1), delta_history, marker='o', color='blue')
+        ax.set_title("Value Iteration Convergence")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Delta (Change in Values)")
+        plt.tight_layout()
+        plt.savefig("value_iteration_convergence.png")
+        print("Convergence plot saved as value_iteration_convergence.png")
+
+    def test_policy(self):
+        """Test the learned policy by navigating the grid based on the optimal policy."""
+        position = self.grid_game.start_position  # Start at the initial position
+        total_reward = 0
+        steps = 0
+        visited_positions = set()
+
+        print("Testing the learned policy...")
+        while position != self.grid_game.goal_position and steps < 100:
+            state = self.grid_game.get_state_from_pos(position)
+            action = self.policy[state]
+            dr, dc = self.grid_game.actions[action]
+            new_position = (
+                max(0, min(position[0] + dr, self.grid_game.grid_size - 1)),
+                max(0, min(position[1] + dc, self.grid_game.grid_size - 1))
+            )
+
+            # Check if the new position is a death zone
+            if self.grid_game.D[new_position[1], new_position[0]] > 0.8:
+                print(f"Hit a death zone at {new_position}. Resetting to start.")
+                position = self.grid_game.start_position
+                total_reward -= 10  # Penalty for hitting a death state
+                visited_positions.clear()  # Reset visited positions
+                steps = 0  # Restart step count
+                continue
+
+            if new_position in visited_positions:
+                total_reward -= 0.1  # Penalize revisiting states
+            visited_positions.add(new_position)
+
+            position = new_position
+            total_reward += self.grid_game.R[position[1], position[0]] - 0.04  # Add reward for moving
+            steps += 1
+
+            # Update and display the grid
+            self.grid_game.player_position = position
+            self.grid_game.draw_player()
+            self.grid_game.root.update()
+            time.sleep(0.5)
+
+            print(f"Step {steps}, Position: {position}, Total Reward: {total_reward}")
+
+        # Print final result
+        if position == self.grid_game.goal_position:
+            print("Goal reached!")
+        else:
+            print("Test ended. Maximum steps reached.")
+        print(f"Final Reward: {total_reward}")
