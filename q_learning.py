@@ -3,11 +3,10 @@ import random
 import matplotlib.pyplot as plt
 
 
-def train_q_learning(grid_game):
+def train_q_learning(grid_game): # this is uses value iteration alone the process is the same
     """Trains the agent using Q-learning."""
     rewards_per_episode = []
     # save q_table to the GridGame class since we need to access it from test_q_learning
-    grid_game.q_table = np.random.uniform(low=0, high=0.01, size=(grid_game.grid_size, grid_game.grid_size, 4))
     learning_rate = 0.05
     discount_factor = 0.95
     exploration_prob = 1.0
@@ -100,6 +99,7 @@ def train_q_learning(grid_game):
     plt.savefig("q-learning training progress.png", dpi=300)
     plt.show()
 
+
 def test_q_learning(grid_game, is_training=True):
     """Tests the trained Q-learning agent."""
     grid_game.reset_game()
@@ -108,12 +108,17 @@ def test_q_learning(grid_game, is_training=True):
     while not grid_game.game_over:
         action_index = np.argmax(grid_game.q_table[state[1], state[0], :])
         action = grid_game.actions[action_index]
+        print('action: ', action)
         new_state = (max(0, min(state[0] + action[0], grid_game.grid_size - 1)),
                         max(0, min(state[1] + action[1], grid_game.grid_size - 1)))
         state = new_state
+        print('state: ', state)
         grid_game.player_position = state
         grid_game.draw_player()
         if not is_training:
             # this root.update() is to show the learned path by running q-learning
             grid_game.root.update()
         grid_game.check_position()
+
+
+

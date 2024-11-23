@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
 from sarsa import *
+from policy_learning import PolicyIteration
+from value_learning import ValueIteration
+
 
 
 class GridGame:
@@ -32,8 +35,11 @@ class GridGame:
         # Reward and death matrices
         self.R = (np.random.rand(self.grid_size, self.grid_size) * 0.3 + 0.7) * max_reward_prob  # Low reward probability
         self.D = self.create_death_matrix(fixed=fixed_path, path_death_prob=path_death_prob)  # Custom death matrix with a complex path
+        self.policy_iteration = PolicyIteration(self)
+        self.value_iteration = ValueIteration(self, gamma=0.95)
 
         # Player position initialization
+
         self.reset_player_position()
 
         # Game UI setup
@@ -73,6 +79,11 @@ class GridGame:
         self.restart_button = tk.Button(control_frame, text="Restart Game (space key)", command=self.reset_game)
         self.restart_button.grid(row=9, column=0, pady=5)
 
+        #I intialize it here just for ease of use
+        self.q_table = np.random.uniform(low=0, high=0.01, size=(self.grid_size, self.grid_size, 4))
+        self.policy = np.random.randint(0, len(self.actions), (self.grid_size, self.grid_size), dtype=int)
+
+
         self.setup_grid()
         self.draw_player()
 
@@ -85,6 +96,12 @@ class GridGame:
         self.root.bind("<q>", lambda _: train_q_learning(self))
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
+
+        self.root.bind("<p>", lambda _: self.policy_iteration.train())  
+        self.root.bind("<y>", lambda _: self.policy_iteration.test_policy()) 
+        self.root.bind("<v>", lambda _: self.value_iteration.train())
+        self.root.bind("<b>", lambda _: self.value_iteration.test_policy())  # Bind 'y' to test value iteration
+
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
         """Creates a complex path with an specific overall death probability from start to goal."""
@@ -278,7 +295,34 @@ class GridGame:
         self.D = self.create_death_matrix(fixed=self.fixed_path, path_death_prob=self.path_death_prob)  # Custom death matrix with a complex path
         self.reached_goal = False
         self.reset_game()
+        self.policy_iteration = PolicyIteration(self)
+        self.value_iteration = ValueIteration(self, gamma=0.95)#reset the iterations since it breaks without
+
         # self.root.update()
+
+    def get_state_from_pos(self, cords):
+        """
+        Converts a 2D grid position (row, col) into a 1D state index.
+        Accounts for flipped y-axis between the death matrix and the game grid.
+        """
+        row, col = cords
+        # No flipping of row indices needed for proper correspondence
+        return row * self.grid_size + col
+    def if_death(self, x, y):
+        """Checks if the given position (x, y) is a death state."""
+        death_prob = self.D[y, x]  # Access the death probability for the given coordinates
+        death = np.random.binomial(1, death_prob)  # Simulate the death probability
+        return death == 1
+
+
+
+
+
+
+
+
+
+
 
 
 # Main execution
