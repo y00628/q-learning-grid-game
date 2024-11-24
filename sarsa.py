@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, exploration_prob = 1.0, exploration_decay = 0.995, \
         min_exploration_prob = 0.1, num_episodes = 5000, reached_goal = False, max_steps = 64):
     """Trains the agent using State-Action-Reward-State-Action model."""
+    
     rewards_per_episode = []
     # save q_table to the GridGame class o that we can access it from test_sarsa
     grid_game.q_table = np.random.uniform(low=0, high=0.01, size=(grid_game.grid_size, grid_game.grid_size, 4))
@@ -13,22 +14,25 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
     grid_game.reached_goal = reached_goal
     
     for episode in range(num_episodes):
+        # Initialization
         grid_game.reset_player_position()
         visited_count = np.zeros((grid_game.grid_size, grid_game.grid_size), dtype=int)
         state = grid_game.player_position
         step_count = 0
         total_reward = 0
+        
+        # Choose action a based on Q(s,a). Method used: epsilon-greedy
+        if random.uniform(0, 1) < exploration_prob:
+            action_index = random.randint(0, 3)
+        else:
+            max_q_value = np.max(grid_game.q_table[state[1], state[0], :])
+            # Choose randomly among the best actions in case there is a tie
+            best_actions = np.where(grid_game.q_table[state[1], state[0], :] == max_q_value)[0]
+            action_index = np.random.choice(best_actions)
+        action = grid_game.actions[action_index]
+        
         while not grid_game.game_over and step_count < max_steps:
             step_count += 1
-            # Choose action (epsilon-greedy)
-            if random.uniform(0, 1) < exploration_prob:
-                action_index = random.randint(0, 3)
-            else:
-                max_q_value = np.max(grid_game.q_table[state[1], state[0], :])
-                # Choose randomly among the best actions in case there is a tie
-                best_actions = np.where(grid_game.q_table[state[1], state[0], :] == max_q_value)[0]
-                action_index = np.random.choice(best_actions)
-            action = grid_game.actions[action_index]
 
             # Take action
             new_state = (max(0, min(state[0] + action[0], grid_game.grid_size - 1)),
@@ -44,17 +48,27 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
             if step_count >= max_steps:
                 grid_game.game_over = True
                 total_reward -= 10
+                
 
             # Penalize for visted state (to prevent just going back and forth)
             # TODO need to confirm whether it is okay to add this part
             visited_count[new_state[1], new_state[0]] += 1
             if visited_count[new_state[1], new_state[0]] > 1:
                 reward -= (0.5 * visited_count[new_state[1], new_state[0]])
+                
+            # Choose action a based on Q(s',a'). Method used: epilson-greedy method
+            if random.uniform(0, 1) < exploration_prob:
+                action_index = random.randint(0, 3)
+            else:
+                max_q_value = np.max(grid_game.q_table[new_state[1], new_state[0], :])
+                # Choose randomly among the best actions in case there is a tie
+                best_actions = np.where(grid_game.q_table[new_state[1], new_state[0], :] == max_q_value)[0]
+                new_action_index = np.random.choice(best_actions)
+            new_action = grid_game.actions[new_action_index]
 
             # Update Q-value
-            best_future_q = np.max(grid_game.q_table[new_state[1], new_state[0], :])
             grid_game.q_table[state[1], state[0], action_index] += learning_rate * (
-                    reward + discount_factor * best_future_q - grid_game.q_table[state[1], state[0], action_index])
+                    reward + discount_factor * grid_game.q_table[new_state[1], new_state[0], new_action_index] - grid_game.q_table[state[1], state[0], action_index])
 
             # Update GUI to show agent movement
             grid_game.player_position = new_state
@@ -65,12 +79,13 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
             # grid_game.root.update()
 
             state = new_state
+            action = new_action
             total_reward += reward
 
             # Check if reached goal
             if state == grid_game.goal_position:
                 print('Goal reached during training')
-                test_q_learning(grid_game)
+                test_sarsa(grid_game)
                 break
 
         # if num_goal_reached >= self.max_goal_to_reach:
@@ -96,8 +111,8 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
     plt.savefig("q-learning training progress.png", dpi=300)
     plt.show()
 
-def test_q_learning(grid_game, is_training=True):
-    """Tests the trained Q-learning agent."""
+def test_sarsa(grid_game, is_training=True):
+    """Tests the trained SARSA agent."""
     grid_game.reset_game()
     state = grid_game.player_position
     grid_game.total_reward = 0
