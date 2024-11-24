@@ -58,7 +58,7 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
                 
             # Choose action a based on Q(s',a'). Method used: epilson-greedy method
             if random.uniform(0, 1) < exploration_prob:
-                action_index = random.randint(0, 3)
+                new_action_index = random.randint(0, 3)
             else:
                 max_q_value = np.max(grid_game.q_table[new_state[1], new_state[0], :])
                 # Choose randomly among the best actions in case there is a tie
@@ -107,8 +107,8 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
     plt.plot(rewards_per_episode)
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
-    plt.title("Q-Learning Training Progress")
-    plt.savefig("q-learning training progress.png", dpi=300)
+    plt.title("SARSA Training Progress")
+    plt.savefig("sarsa training progress.png", dpi=300)
     plt.show()
 
 def test_sarsa(grid_game, is_training=True):
