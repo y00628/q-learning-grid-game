@@ -76,9 +76,10 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
             # NOTE Commenting this line makes training faster
             #      If you want to see the training process, uncomment the line below.
             #      But it will make training slow
-            # grid_game.root.update()
+            grid_game.root.update()
 
             state = new_state
+            action_index = new_action_index
             action = new_action
             total_reward += reward
 
