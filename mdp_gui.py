@@ -5,6 +5,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from q_learning import test_q_learning, train_q_learning
+from sarsa import test_sarsa, train_sarsa
 from policy_learning import PolicyIteration
 from value_learning import ValueIteration
 
@@ -95,6 +96,9 @@ class GridGame:
         self.root.bind("<q>", lambda _: train_q_learning(self))
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
         self.root.bind("<r>", lambda _: self.change_map())
+        
+        self.root.bind("<s>", lambda _: train_sarsa(self))
+        self.root.bind("<d>", lambda _: test_sarsa(self, is_training=False))
 
         self.root.bind("<p>", lambda _: self.policy_iteration.train())  
         self.root.bind("<y>", lambda _: self.policy_iteration.test_policy()) 
