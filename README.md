@@ -44,27 +44,32 @@ The GUI will launch, allowing you to interact with the grid environment and obse
 
 ## Training and Testing Algorithms
 
-### Training
-To train an agent using Q-Learning or other implemented algorithms:
-1. Open the `train.py` file in the project directory.
-2. Configure parameters such as learning rate, discount factor, and exploration strategy.
-3. Run the training script:
-   ```bash
-   python train.py
-   ```
+The training and testing of algorithms are controlled through specific key bindings in the GUI. Once the application is running, use the following keys to interact with the agent and initiate various algorithms:
 
-The trained model will be saved in the specified directory or displayed in the terminal.
+- **Movement Controls**:
+  - `Arrow Keys (↑, ↓, ←, →)`: Move the agent up, down, left, or right.
+  - `Space`: Reset the game to its initial state.
 
-### Testing
-To test the performance of a trained agent:
-1. Open the `test.py` file.
-2. Ensure the model path is set to the trained model file.
-3. Run the testing script:
-   ```bash
-   python test.py
-   ```
+- **Q-Learning**:
+  - `Q`: Train the agent using Q-Learning.
+  - `T`: Test the agent's performance using a pre-trained Q-Learning model.
 
-The test results, including the policy learned and performance metrics, will be displayed in the terminal or plotted for visualization.
+- **SARSA**:
+  - `S`: Train the agent using the SARSA algorithm.
+  - `D`: Test the agent's performance using a pre-trained SARSA model.
+
+- **Policy Iteration**:
+  - `P`: Train the agent using Policy Iteration.
+  - `Y`: Test the policy derived from Policy Iteration.
+
+- **Value Iteration**:
+  - `V`: Train the agent using Value Iteration.
+  - `B`: Test the policy derived from Value Iteration.
+
+- **Environment Controls**:
+  - `R`: Change the map layout and start a new game.
+
+Use these bindings to experiment with different reinforcement learning algorithms, train agents, and evaluate their performance on the grid environment.
 
 ---
 
@@ -78,11 +83,6 @@ The test results, including the policy learned and performance metrics, will be 
 
 ## Contributing
 Contributions are welcome! Feel free to fork the repository and submit a pull request for bug fixes or new features.
-
----
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
