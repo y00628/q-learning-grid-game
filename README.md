@@ -52,11 +52,11 @@ The training and testing of algorithms are controlled through specific key bindi
 
 - **Q-Learning**:
   - `Q`: Train the agent using Q-Learning.
-  - `T`: Test the agent's performance using a pre-trained Q-Learning model.
+  - `T`: Test the agent's performance using a pre-trained Q-Learning agent.
 
 - **SARSA**:
   - `S`: Train the agent using the SARSA algorithm.
-  - `D`: Test the agent's performance using a pre-trained SARSA model.
+  - `D`: Test the agent's performance using a pre-trained SARSA agent.
 
 - **Policy Iteration**:
   - `P`: Train the agent using Policy Iteration.
@@ -69,7 +69,7 @@ The training and testing of algorithms are controlled through specific key bindi
 - **Environment Controls**:
   - `R`: Change the map layout and start a new game.
 
-Use these bindings to experiment with different reinforcement learning algorithms, train agents, and evaluate their performance on the grid environment.
+Use the above instructions to experiment with different reinforcement learning algorithms and train/test agents.
 
 ---
 
