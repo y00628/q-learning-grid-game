@@ -69,7 +69,7 @@ The training and testing of algorithms are controlled through specific key bindi
 - **Environment Controls**:
   - `R`: Change the map layout and start a new game.
 
-Use the above instructions to experiment with different reinforcement learning algorithms and train/test agents.
+Use the above instructions to experiment with different reinforcement learning algorithms and train/test agents. Remember to press `R` after an agent is done training.
 
 ---
 
