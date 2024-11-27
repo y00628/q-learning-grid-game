@@ -103,7 +103,7 @@ class GridGame:
         self.root.bind("<p>", lambda _: self.policy_iteration.train())  
         self.root.bind("<y>", lambda _: self.policy_iteration.test_policy()) 
         self.root.bind("<v>", lambda _: self.value_iteration.train())
-        self.root.bind("<b>", lambda _: self.value_iteration.test_policy())  # Bind 'y' to test value iteration
+        self.root.bind("<b>", lambda _: self.value_iteration.test_policy())  # Bind 'b' to test value iteration
 
 
     def create_death_matrix(self, fixed=False, path_death_prob=0.3):
