@@ -97,7 +97,7 @@ def train_q_learning(grid_game):
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
     plt.title("Q-Learning Training Progress")
-    plt.savefig("q-learning training progress.png", dpi=300)
+    plt.savefig("figures/q-learning training progress.png", dpi=300)
     plt.show()
 
 

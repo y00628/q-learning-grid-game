@@ -124,7 +124,7 @@ class ValueIteration:
         ax.set_xlabel("Iteration")
         ax.set_ylabel("Delta (Change in Values)")
         plt.tight_layout()
-        plt.savefig("value_iteration_convergence.png")
+        plt.savefig("figures/value_iteration_convergence.png")
         print("Convergence plot saved as value_iteration_convergence.png")
 
     def test_policy(self):

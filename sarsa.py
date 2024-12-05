@@ -106,7 +106,7 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
     plt.title("SARSA Training Progress")
-    plt.savefig("sarsa training progress.png", dpi=300)
+    plt.savefig("figures/sarsa training progress.png", dpi=300)
     plt.show()
 
 def test_sarsa(grid_game, is_training=True):
