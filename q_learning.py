@@ -109,11 +109,9 @@ def test_q_learning(grid_game, is_training=True):
     while not grid_game.game_over:
         action_index = np.argmax(grid_game.q_table[state[1], state[0], :])
         action = grid_game.actions[action_index]
-        print('action: ', action)
         new_state = (max(0, min(state[0] + action[0], grid_game.grid_size - 1)),
                         max(0, min(state[1] + action[1], grid_game.grid_size - 1)))
         state = new_state
-        print('state: ', state)
         grid_game.player_position = state
         grid_game.draw_player()
         if not is_training:
