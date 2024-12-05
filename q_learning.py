@@ -3,15 +3,16 @@ import random
 import matplotlib.pyplot as plt
 
 
-def train_q_learning(grid_game): # this is uses value iteration alone the process is the same
+def train_q_learning(grid_game):
     """Trains the agent using Q-learning."""
     rewards_per_episode = []
-    # save q_table to the GridGame class since we need to access it from test_q_learning
+    # Parameters for updating the Q-values
     learning_rate = 0.05
     discount_factor = 0.95
     exploration_prob = 1.0
     exploration_decay = 0.995
     min_exploration_prob = 0.1
+
     num_episodes = 5000
     grid_game.reached_goal = False
     max_steps = 64
@@ -44,17 +45,17 @@ def train_q_learning(grid_game): # this is uses value iteration alone the proces
             if death:
                 reward = -1
                 grid_game.game_over = True
+            # Another way to stop the game by setting the max step threshold since our grid is 8*8
             if step_count >= max_steps:
                 grid_game.game_over = True
                 total_reward -= 10
 
             # Penalize for visted state (to prevent just going back and forth)
-            # TODO need to confirm whether it is okay to add this part
             visited_count[new_state[1], new_state[0]] += 1
             if visited_count[new_state[1], new_state[0]] > 1:
                 reward -= (0.5 * visited_count[new_state[1], new_state[0]])
 
-            # Update Q-value
+            # Update Q-value (assuming the optimal action is chosen --> which is why it requires fewer epochs than SARSA)
             best_future_q = np.max(grid_game.q_table[new_state[1], new_state[0], :])
             grid_game.q_table[state[1], state[0], action_index] += learning_rate * (
                     reward + discount_factor * best_future_q - grid_game.q_table[state[1], state[0], action_index])
@@ -73,11 +74,11 @@ def train_q_learning(grid_game): # this is uses value iteration alone the proces
             # Check if reached goal
             if state == grid_game.goal_position:
                 print('Goal reached during training')
+                # Test the most recent policy to see if it can reach the goal.
+                # If not, train more episodes
                 test_q_learning(grid_game)
                 break
 
-        # if num_goal_reached >= self.max_goal_to_reach:
-        #     break
         if grid_game.reached_goal:
             break
 

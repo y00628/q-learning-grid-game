@@ -51,7 +51,6 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
                 
 
             # Penalize for visted state (to prevent just going back and forth)
-            # TODO need to confirm whether it is okay to add this part
             visited_count[new_state[1], new_state[0]] += 1
             if visited_count[new_state[1], new_state[0]] > 1:
                 reward -= (0.5 * visited_count[new_state[1], new_state[0]])
@@ -89,8 +88,6 @@ def train_sarsa(grid_game, learning_rate = 0.05, discount_factor = 0.95, explora
                 test_sarsa(grid_game)
                 break
 
-        # if num_goal_reached >= self.max_goal_to_reach:
-        #     break
         if grid_game.reached_goal:
             break
 

@@ -93,9 +93,10 @@ class GridGame:
         self.root.bind("<Left>", lambda _: self.move_player(-1, 0))
         self.root.bind("<Right>", lambda _: self.move_player(1, 0))
         self.root.bind("<space>", lambda _: self.reset_game())
+        self.root.bind("<r>", lambda _: self.change_map())
+
         self.root.bind("<q>", lambda _: train_q_learning(self))
         self.root.bind("<t>", lambda _: test_q_learning(self, is_training=False))
-        self.root.bind("<r>", lambda _: self.change_map())
         
         self.root.bind("<s>", lambda _: train_sarsa(self))
         self.root.bind("<d>", lambda _: test_sarsa(self, is_training=False))
